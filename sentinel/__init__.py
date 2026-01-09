@@ -8,10 +8,10 @@ __author__ = "Guilherme F. G. Santos"
 
 from sentinel.analyzer import SecurityHeadersAnalyzer
 from sentinel.models import (
-    SecurityReport,
     HeaderAnalysis,
-    Severity,
     HeaderQuality,
+    SecurityReport,
+    Severity,
 )
 
 __all__ = [

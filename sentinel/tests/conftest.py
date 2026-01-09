@@ -4,15 +4,12 @@ Because repetition is the enemy of tactical efficiency.
 """
 
 import pytest
-from typing import Dict
-from sentinel.models import (
-    SecurityReport, HeaderAnalysis, RedirectHop,
-    Severity, HeaderQuality
-)
+
+from sentinel.models import HeaderAnalysis, HeaderQuality, RedirectHop, SecurityReport, Severity
 
 
 @pytest.fixture
-def sample_headers() -> Dict[str, str]:
+def sample_headers() -> dict[str, str]:
     """Provide sample HTTP headers for testing."""
     return {
         "strict-transport-security": "max-age=31536000; includeSubDomains",
@@ -28,17 +25,9 @@ def sample_redirect_chain():
     """Provide sample redirect chain for testing."""
     return [
         RedirectHop(
-            url="http://example.com",
-            status_code=301,
-            location="https://example.com",
-            scheme="http"
+            url="http://example.com", status_code=301, location="https://example.com", scheme="http"
         ),
-        RedirectHop(
-            url="https://example.com",
-            status_code=200,
-            location=None,
-            scheme="https"
-        ),
+        RedirectHop(url="https://example.com", status_code=200, location=None, scheme="https"),
     ]
 
 
@@ -56,7 +45,7 @@ def sample_analysis() -> HeaderAnalysis:
         max_score=20.0,
         issues=["Minor issue"],
         recommendations=["Improve configuration"],
-        issue_types={"test_issue"}
+        issue_types={"test_issue"},
     )
 
 
@@ -75,7 +64,7 @@ def sample_report(sample_redirect_chain, sample_headers) -> SecurityReport:
             max_score=20.0,
         )
     ]
-    
+
     return SecurityReport(
         final_url="https://example.com",
         status_code=200,
@@ -85,5 +74,5 @@ def sample_report(sample_redirect_chain, sample_headers) -> SecurityReport:
         total_score=20.0,
         max_score=20.0,
         exposure_penalty=0.0,
-        warnings=[]
+        warnings=[],
     )

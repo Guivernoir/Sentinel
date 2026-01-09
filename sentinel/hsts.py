@@ -3,47 +3,46 @@ HSTS analysis. Because transport security isn't optional.
 Unless you enjoy man-in-the-middle attacks, of course.
 """
 
-from typing import Tuple, List
 from sentinel.models import HeaderQuality
 
 
 class HSTSAnalyzer:
     """Strict-Transport-Security analyzer. The HTTPS enforcer."""
-    
+
     RECOMMENDED_MAX_AGE = 31536000  # 1 year
     MINIMUM_MAX_AGE = 2592000  # 30 days
-    
+
     ISSUE_TYPE_MISSING_MAXAGE = "missing_maxage"
     ISSUE_TYPE_SHORT_MAXAGE = "short_maxage"
     ISSUE_TYPE_MISSING_SUBDOMAINS = "missing_subdomains"
     ISSUE_TYPE_INVALID_VALUE = "invalid_value"
-    
+
     @classmethod
-    def analyze(cls, hsts_value: str) -> Tuple[HeaderQuality, List[str], List[str], set]:
+    def analyze(cls, hsts_value: str) -> tuple[HeaderQuality, list[str], list[str], set]:
         """Analyze HSTS configuration. Accept no compromise."""
         issues = []
         recommendations = []
         issue_types = set()
-        
+
         max_age = None
         has_includesubdomains = False
         has_preload = False
-        
-        directives = [d.strip() for d in hsts_value.split(';') if d.strip()]
-        
+
+        directives = [d.strip() for d in hsts_value.split(";") if d.strip()]
+
         for directive in directives:
             directive_lower = directive.lower()
-            if directive_lower.startswith('max-age='):
+            if directive_lower.startswith("max-age="):
                 try:
-                    max_age = int(directive.split('=', 1)[1])
+                    max_age = int(directive.split("=", 1)[1])
                 except (ValueError, IndexError):
                     issues.append("Invalid max-age value")
                     issue_types.add(cls.ISSUE_TYPE_INVALID_VALUE)
-            elif directive_lower == 'includesubdomains':
+            elif directive_lower == "includesubdomains":
                 has_includesubdomains = True
-            elif directive_lower == 'preload':
+            elif directive_lower == "preload":
                 has_preload = True
-        
+
         # Validate max-age - the foundation of HSTS
         if max_age is None:
             issues.append("Missing required max-age directive")
@@ -65,7 +64,7 @@ class HSTSAnalyzer:
             quality = HeaderQuality.GOOD
         else:
             quality = HeaderQuality.EXCELLENT
-        
+
         # Check includeSubDomains - because subdomain compromises are real
         if not has_includesubdomains and quality in (HeaderQuality.GOOD, HeaderQuality.EXCELLENT):
             issues.append("Missing includeSubDomains directive - subdomains not protected")
@@ -73,10 +72,10 @@ class HSTSAnalyzer:
             issue_types.add(cls.ISSUE_TYPE_MISSING_SUBDOMAINS)
             if quality == HeaderQuality.EXCELLENT:
                 quality = HeaderQuality.GOOD
-        
+
         # Preload validation - can't preload without subdomain coverage
         if has_preload and not has_includesubdomains:
             issues.append("preload directive requires includeSubDomains")
             recommendations.append("Add includeSubDomains for preload eligibility")
-        
+
         return quality, issues, recommendations, issue_types

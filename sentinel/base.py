@@ -3,18 +3,19 @@ Base protocol for all header analyzers. Because protocols beat inheritance.
 Duck typing with a tactical vest.
 """
 
-from typing import Protocol, Tuple, List
+from typing import Protocol
+
 from sentinel.models import HeaderQuality
 
 
 class HeaderAnalyzer(Protocol):
     """Protocol for header-specific analyzers. The contract."""
-    
+
     @staticmethod
-    def analyze(value: str) -> Tuple[HeaderQuality, List[str], List[str], set]:
+    def analyze(value: str) -> tuple[HeaderQuality, list[str], list[str], set]:
         """
         Analyze header value with surgical precision.
-        
+
         Returns:
             quality: Assessment of configuration
             issues: List of problems found
