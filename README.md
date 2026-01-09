@@ -1,103 +1,119 @@
 # Sentinel Security Header Analyzer
 
-> Tactical HTTP security header analysis with surgical precision.
+> Deterministic, explainable HTTP security header policy evaluation for engineers who need to understand *why*.
 
 [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Tests](https://img.shields.io/badge/tests-154%20passing-brightgreen.svg)](https://github.com/yourusername/sentinel)
-[![Coverage](https://img.shields.io/badge/coverage-75%25-yellow.svg)](https://github.com/yourusername/sentinel)
+[![Core Coverage](https://img.shields.io/badge/core%20coverage-95%25-brightgreen.svg)](https://github.com/Guivernoir/sentinel)
+[![Tests](https://img.shields.io/badge/tests-154%20passing-brightgreen.svg)](https://github.com/Guivernoir/sentinel)
 
-Sentinel analyzes HTTP security headers and provides actionable intelligence on your web application's security posture. Because properly configured headers are the difference between defense and theater.
+Sentinel analyzes HTTP security headers against a strict defense-in-depth security model. Unlike binary pass/fail scanners, it provides nuanced quality assessment, issue categorization, and actionable recommendations based on an opinionated but transparent security philosophy.
 
-## Features
+## What Makes Sentinel Different
 
-- 🎯 **Comprehensive Analysis** - Evaluates 10+ security headers with tactical precision
-- 🔍 **Deep Inspection** - Parses complex policies (CSP, Permissions-Policy, HSTS)
-- 📊 **Quality Assessment** - Scores configurations from EXCELLENT to DANGEROUS
-- 🚨 **Priority Recommendations** - Focuses on critical improvements first
-- 🔗 **Redirect Chain Analysis** - Tracks full redirect paths and protocol downgrades
-- 🛡️ **Information Disclosure Detection** - Identifies headers leaking technology stack
-- 🎨 **Rich Terminal UI** - Professional output with color-coded status indicators
-- ⚡ **Async Operations** - Fast analysis with proper timeout handling
-- ✅ **Comprehensive Testing** - 154 tests with 75% coverage
+**Explainability Over Simplicity**
+- Issues categorized by type (structural, unsafe, wildcard, downgrade)
+- Quality grades beyond pass/fail (EXCELLENT → GOOD → WEAK → DANGEROUS)
+- Actionable recommendations tied to specific problems
 
-## Real-World Example
+**Deterministic & Testable**
+- Same input → same output, always
+- 154 tests covering edge cases and real-world scenarios
+- Core analysis logic: 95%+ test coverage
 
-Here's what analyzing Google.com reveals:
+**Opinionated But Transparent**
+- Encodes a strict AppSec security stance
+- Severity weights and thresholds are explicit
+- Philosophy: defense-in-depth > minimum compliance
+
+**Built for Engineers**
+- Parseable JSON output (planned)
+- Programmatic API for integration
+- Rich terminal UI for interactive use
+
+## What Sentinel Measures (And Doesn't)
+
+### ✅ What We Analyze
+
+**HTTP Header Configuration** - The defense-in-depth layer provided by response headers:
+- Presence and quality of security headers
+- Policy syntax and semantics (CSP, HSTS, etc.)
+- Misconfigurations that create attack surface
+- Information disclosure through header values
+
+### ❌ What We Don't Measure
+
+**Effective Security Posture** - Sentinel cannot see:
+- Internal routing and security layers
+- Origin-specific policies applied upstream
+- Browser-level mitigations
+- WAF rules and protections
+- Application-level security controls
+
+**Important:** A low Sentinel score indicates **header-based defense gaps**, not necessarily exploitable vulnerabilities. Organizations may have compensating controls Sentinel cannot observe.
+
+## Real-World Example: Header Analysis vs. Security Posture
+
+Here's what analyzing a major site reveals about **header-based defense-in-depth**:
 
 ```bash
 $ sentinel analyze google.com
-
-Initiating security header analysis...
 
 ╭────────────────────────── Sentinel Analysis Report ──────────────────────────╮
 │ Target: https://www.google.com/                                              │
 │ Status: 200                                                                  │
 │ Score: 9.0/96.0 (9.4%)                                                       │
-│ Assessment: VULNERABLE                                                       │
-│ Exposure Penalty: -2.0                                                       │
+│ Assessment: VULNERABLE (header-based defense)                                │
 │ Redirects: 1                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-╭──────────────────────────────── ⚠️  Warnings ─────────────────────────────────╮
-│  • Cross-domain redirects detected: google.com -> www.google.com             │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-                            Security Header Analysis
+                            Security Header Analysis                            
 ╭────────────────────────┬──┬──────┬──┬────────────────────────────────────────╮
 │ Header                 │  │ Qual │  │ Analysis                               │
 ├────────────────────────┼──┼──────┼──┼────────────────────────────────────────┤
-│ strict-transport-secu… │  │ MISS │  │ Add Strict-Transport-Security (HSTS)   │
-│ content-security-poli… │  │ MISS │  │ Implement Content-Security-Policy      │
+│ strict-transport-secu… │  │ MISS │  │ HSTS not present in response           │
+│ content-security-poli… │  │ MISS │  │ No CSP header-based XSS protection     │
 │ x-frame-options        │  │ EXCL │  │ —                                      │
-│ x-content-type-options │  │ MISS │  │ Add X-Content-Type-Options: nosniff    │
-│ referrer-policy        │  │ MISS │  │ Add Referrer-Policy                    │
-│ permissions-policy     │  │ MISS │  │ Define Permissions-Policy              │
-│ server                 │  │ DANG │  │ Reveals server version information     │
+│ x-content-type-options │  │ MISS │  │ MIME type sniffing not prevented       │
+│ referrer-policy        │  │ MISS │  │ No referrer control header             │
+│ permissions-policy     │  │ MISS │  │ No feature policy restrictions         │
+│ server                 │  │ DANG │  │ Reveals: "gws" (information leakage)   │
 ╰────────────────────────┴──┴──────┴──┴────────────────────────────────────────╯
-
-╭──────────────────────── 🎯 Priority Recommendations ─────────────────────────╮
-│  • strict-transport-security: Add HSTS with min max-age=31536000            │
-│  • content-security-policy: Implement CSP starting with default-src 'self'   │
-╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
-**Key Findings:**
+**What This Tells Us:**
+- Header-based defense-in-depth is minimal
+- Missing standard security headers (HSTS, CSP)
+- Relies on other security layers not visible to header analysis
 
-- Even major sites like Google have gaps in security header coverage
-- Missing critical headers: HSTS, CSP, Content-Type-Options, Referrer-Policy
-- Information disclosure through `Server` header
-- Only scores 9.4% - classified as VULNERABLE
-- Google prioritizes **availability** over header-based confidentiality controls. The service is optimized for global scale and performance rather than strict security headers, representing a trade-off in defense-in-depth strategy
+**What This Doesn't Tell Us:**
+- Whether the site is actually vulnerable
+- What upstream security controls exist
+- How Chrome's built-in protections apply
+- Whether APIs and backends have different policies
+
+**Key Insight:** Large organizations often implement security controls at layers Sentinel cannot observe. Missing headers indicate increased reliance on other security mechanisms, not necessarily exploitable vulnerabilities.
 
 ## Installation
 
 ### From Source
 
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/sentinel.git
 cd sentinel
-
-# Create virtual environment (recommended)
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install in development mode
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
 ## Quick Start
 
 ```bash
-# Analyze a domain (HTTPS assumed)
+# Analyze header-based defense posture
 sentinel analyze example.com
 
-# Verbose output with detailed issues
+# Detailed output with issue explanations
 sentinel analyze example.com --verbose
 
 # Custom timeout for slow servers
@@ -115,13 +131,13 @@ sentinel analyze example.com --no-redirect
 # Basic analysis
 sentinel analyze example.com
 
-# Analyze with custom timeout
+# Analyze with timeout
 sentinel analyze slow-server.com --timeout 60
 
-# Analyze HTTP endpoint specifically
+# Analyze HTTP explicitly (not recommended for production)
 sentinel analyze http://example.com --no-redirect
 
-# Verbose output showing all header details
+# Verbose mode shows all header details and reasoning
 sentinel analyze example.com --verbose
 ```
 
@@ -130,9 +146,8 @@ sentinel analyze example.com --verbose
 ```python
 import asyncio
 from sentinel.analyzer import SecurityHeadersAnalyzer
-from sentinel.renderer import render_report
 
-async def analyze_website():
+async def analyze_headers():
     analyzer = SecurityHeadersAnalyzer(
         timeout=10,
         follow_redirects=True,
@@ -141,27 +156,21 @@ async def analyze_website():
 
     report = await analyzer.analyze("https://example.com")
 
-    # Access report data
+    # Access structured data
     print(f"Score: {report.total_score}/{report.max_score}")
-    print(f"Percentage: {(report.total_score/report.max_score)*100:.1f}%")
-    print(f"Status Code: {report.status_code}")
-    print(f"Final URL: {report.final_url}")
-
-    # Check specific headers
+    print(f"Assessment: {report.status_code}")
+    
+    # Examine specific headers
     for analysis in report.analyses:
-        if analysis.name == "strict-transport-security":
-            print(f"HSTS Present: {analysis.present}")
-            print(f"HSTS Quality: {analysis.quality}")
-            print(f"Issues: {analysis.issues}")
+        if not analysis.present:
+            print(f"Missing: {analysis.name}")
+        elif analysis.quality.value == "dangerous":
+            print(f"Dangerous: {analysis.name} - {analysis.issues}")
 
-    # Render formatted terminal output
-    render_report(report, verbose=False)
-
-# Execute
-asyncio.run(analyze_website())
+asyncio.run(analyze_headers())
 ```
 
-### Testing Individual Headers
+### Testing Individual Policies
 
 ```python
 from sentinel.csp import CSPAnalyzer
@@ -173,400 +182,319 @@ quality, issues, recommendations, issue_types = CSPAnalyzer.analyze(
     "default-src 'self'; script-src 'unsafe-inline' *"
 )
 
-print(f"Quality: {quality}")        # HeaderQuality.DANGEROUS
-print(f"Issues: {issues}")          # Lists specific problems
-print(f"Recommendations: {recommendations}")  # Actionable fixes
-
-# Analyze HSTS configuration
-quality, issues, recs, types = HSTSAnalyzer.analyze(
-    "max-age=86400"  # Only 1 day
-)
-
-print(f"Quality: {quality}")        # HeaderQuality.WEAK
-print(f"Issues: {issues}")          # ['max-age too short: 86400 seconds']
+print(f"Quality: {quality}")  # HeaderQuality.DANGEROUS
+print(f"Issues: {issues}")     # Specific problems identified
+print(f"Types: {issue_types}") # {ISSUE_TYPE_UNSAFE, ISSUE_TYPE_WILDCARD}
 ```
 
 ## Analyzed Headers
 
-| Header                         | Severity | Purpose                                | Module                  |
-| ------------------------------ | -------- | -------------------------------------- | ----------------------- |
-| `Strict-Transport-Security`    | HIGH     | Forces HTTPS connections               | `hsts.py`               |
-| `Content-Security-Policy`      | HIGH     | Prevents XSS and injection attacks     | `csp.py`                |
-| `X-Frame-Options`              | MEDIUM   | Clickjacking protection                | `analyzer.py` (simple)  |
-| `X-Content-Type-Options`       | MEDIUM   | MIME sniffing prevention               | `analyzer.py` (simple)  |
-| `Referrer-Policy`              | MEDIUM   | Controls referrer information leakage  | `referrer_policy.py`    |
-| `Permissions-Policy`           | MEDIUM   | Restricts browser feature access       | `permissions_policy.py` |
-| `Cross-Origin-Embedder-Policy` | LOW      | Resource isolation                     | `coop.py`               |
-| `Cross-Origin-Opener-Policy`   | LOW      | Process isolation                      | `coop.py`               |
-| `Cross-Origin-Resource-Policy` | LOW      | Resource access control                | `coop.py`               |
-| `X-XSS-Protection`             | INFO     | Legacy XSS filter (should be disabled) | `analyzer.py` (simple)  |
+| Header                         | Severity | Purpose                                | Coverage |
+| ------------------------------ | -------- | -------------------------------------- | -------- |
+| `Strict-Transport-Security`    | HIGH     | Forces HTTPS connections               | 100%     |
+| `Content-Security-Policy`      | HIGH     | Prevents XSS and injection attacks     | 98%      |
+| `X-Frame-Options`              | MEDIUM   | Clickjacking protection                | 100%     |
+| `X-Content-Type-Options`       | MEDIUM   | MIME sniffing prevention               | 100%     |
+| `Referrer-Policy`              | MEDIUM   | Controls referrer information leakage  | 100%     |
+| `Permissions-Policy`           | MEDIUM   | Restricts browser feature access       | 95%      |
+| `Cross-Origin-Embedder-Policy` | LOW      | Resource isolation                     | 100%     |
+| `Cross-Origin-Opener-Policy`   | LOW      | Process isolation                      | 100%     |
+| `Cross-Origin-Resource-Policy` | LOW      | Resource access control                | 100%     |
+| `X-XSS-Protection`             | INFO     | Legacy XSS filter (should be disabled) | 100%     |
 
-### Discouraged Headers (Information Disclosure)
+### Information Disclosure Detection
 
-These headers leak technology stack information and should be removed:
+Sentinel also identifies headers that expose technology stack information:
 
-| Header                | Risk    | Information Revealed      |
-| --------------------- | ------- | ------------------------- |
-| `Server`              | 2.0 pts | Web server version        |
-| `X-Powered-By`        | 3.0 pts | Framework/language stack  |
-| `X-AspNet-Version`    | 2.0 pts | ASP.NET version           |
-| `X-AspNetMvc-Version` | 2.0 pts | MVC framework version     |
-| `X-Generator`         | 2.0 pts | CMS/generator information |
+| Header               | Penalty | Information Revealed         |
+| -------------------- | ------- | ---------------------------- |
+| `Server`             | 2.0 pts | Web server software          |
+| `X-Powered-By`       | 3.0 pts | Framework/language stack     |
+| `X-AspNet-Version`   | 2.0 pts | ASP.NET version              |
+| `X-AspNetMvc-Version`| 2.0 pts | MVC framework version        |
+| `X-Generator`        | 2.0 pts | CMS/generator information    |
 
-## Quality Assessment System
+## Scoring Philosophy (Transparent & Opinionated)
 
-### Header Quality Levels
+### This Is Not "Objective"
 
-- **EXCELLENT** (100%): Optimal configuration, no issues detected
-- **GOOD** (75%): Solid configuration with minor improvements possible
-- **WEAK** (50%): Present but poorly configured, significant issues
-- **DANGEROUS** (0%): Configuration creates security vulnerabilities
-- **MISSING** (0%): Header not present when expected
+Sentinel's scoring embodies **opinionated security priorities**:
+- Defense-in-depth over minimum compliance
+- Strict > permissive when in doubt
+- Information disclosure matters
+- Partial correctness < absence for critical headers
 
-### Overall Site Assessment
+**If you disagree with these priorities**, Sentinel may not match your security model. That's intentional - we'd rather be consistently strict than universally agreeable.
 
-Based on total score percentage:
+### Quality Assessment
 
-| Score Range | Assessment | Meaning                         |
-| ----------- | ---------- | ------------------------------- |
-| 85%+        | STRONG     | Excellent security posture      |
-| 70-84%      | ADEQUATE   | Good foundation, minor gaps     |
-| 50-69%      | WEAK       | Significant improvements needed |
-| <50%        | VULNERABLE | Critical security gaps          |
+**Header Quality Levels:**
+- **EXCELLENT** (100%): Best-practice configuration
+- **GOOD** (75%): Solid with minor improvements possible
+- **WEAK** (50%): Present but poorly configured
+- **DANGEROUS** (0%): Configuration creates vulnerabilities
+- **MISSING** (0%): Header absent when expected
 
-### Scoring Weights by Severity
+### Severity Weights (Hardcoded Philosophy)
 
 ```python
-Severity.HIGH     → 20.0 points max  # HSTS, CSP
-Severity.MEDIUM   → 10.0 points max  # X-Frame-Options, Content-Type-Options, etc.
-Severity.LOW      →  5.0 points max  # Cross-Origin policies
-Severity.INFO     →  1.0 points max  # X-XSS-Protection
+# Maximum points per severity
+Severity.HIGH     → 20.0 points  # HSTS, CSP - critical defenses
+Severity.MEDIUM   → 10.0 points  # X-Frame-Options, etc. - important controls
+Severity.LOW      →  5.0 points  # Cross-Origin - defense-in-depth
+Severity.INFO     →  1.0 points  # X-XSS-Protection - deprecated
 ```
+
+**Total possible: 96 points** (2×HIGH + 5×MEDIUM + 3×LOW + 1×INFO)
+
+### Overall Assessment Thresholds
+
+| Score Range | Assessment | Meaning                                |
+| ----------- | ---------- | -------------------------------------- |
+| 85%+        | STRONG     | Best-practice defense-in-depth         |
+| 70-84%      | ADEQUATE   | Solid foundation, minor gaps           |
+| 50-69%      | WEAK       | Significant improvements needed        |
+| <50%        | VULNERABLE | Critical header-based defense gaps     |
+
+**Note:** These thresholds reflect a strict AppSec stance. A 50% score doesn't mean "half secure" - it means "header-based defenses need significant work."
 
 ## Configuration Examples
 
-### Nginx - Strong Security Configuration
+### Nginx - Strong Header Configuration
 
 ```nginx
-# HTTP -> HTTPS redirect
-server {
-    listen 80;
-    server_name example.com;
-    return 301 https://$server_name$request_uri;
-}
-
 server {
     listen 443 ssl http2;
     server_name example.com;
 
-    # SSL configuration
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-
-    # Security headers (EXCELLENT configuration)
+    # Security headers (STRONG configuration by Sentinel standards)
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     add_header X-Frame-Options "DENY" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     add_header Cross-Origin-Opener-Policy "same-origin" always;
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
     add_header Cross-Origin-Resource-Policy "same-origin" always;
     add_header X-XSS-Protection "0" always;
 
-    # Remove information disclosure headers
+    # Remove information disclosure
     server_tokens off;
     more_clear_headers 'Server';
     more_clear_headers 'X-Powered-By';
-
-    location / {
-        # Your app configuration
-    }
 }
 ```
 
-### Apache - Strong Security Configuration
+**Expected Sentinel Score: ~90%** (STRONG)
 
-```apache
-<VirtualHost *:443>
-    ServerName example.com
-
-    # SSL configuration
-    SSLEngine on
-    SSLCertificateFile /path/to/cert.pem
-    SSLCertificateKeyFile /path/to/key.pem
-    SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
-    SSLCipherSuite HIGH:!aNULL:!MD5
-
-    # Security headers
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    Header always set X-Frame-Options "DENY"
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Content-Security-Policy "default-src 'self'"
-    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-    Header always set Cross-Origin-Opener-Policy "same-origin"
-    Header always set Cross-Origin-Embedder-Policy "require-corp"
-    Header always set Cross-Origin-Resource-Policy "same-origin"
-    Header always set X-XSS-Protection "0"
-
-    # Remove information disclosure
-    Header unset Server
-    Header unset X-Powered-By
-    ServerTokens Prod
-    ServerSignature Off
-</VirtualHost>
-```
-
-## Architecture
+## Architecture & Design
 
 ```
 sentinel/
-├── __init__.py           # Package initialization
-├── models.py             # Core data structures (Enums, Dataclasses)
-├── exceptions.py         # Custom exception hierarchy
-├── base.py              # Analyzer protocol definition
-├── analyzer.py          # Main orchestration engine
-├── renderer.py          # Rich terminal output formatting
-├── cli.py               # Typer CLI interface
-├── hsts.py             # HSTS analyzer (90%+ coverage)
-├── csp.py              # Content Security Policy analyzer (90%+ coverage)
-├── coop.py             # Cross-Origin-* analyzers (90%+ coverage)
-├── permissions_policy.py # Permissions-Policy analyzer (95% coverage)
-├── referrer_policy.py   # Referrer-Policy analyzer (90%+ coverage)
-└── tests/              # Comprehensive test suite
-    ├── __init__.py
-    ├── conftest.py
-    ├── test_models.py       # 100% coverage
-    ├── test_hsts.py         # 100% coverage
-    ├── test_csp.py          # 100% coverage
-    ├── test_coop.py         # 100% coverage
-    ├── test_permissions_policy.py  # 100% coverage
-    ├── test_referrer_policy.py     # 100% coverage
-    └── test_analyzer.py     # Integration tests
+├── models.py              # Data structures (Severity, Quality, Reports)
+├── exceptions.py          # Custom exception hierarchy
+├── analyzer.py           # Main orchestration (84% coverage)
+├── hsts.py              # HSTS analyzer (100% coverage)
+├── csp.py               # CSP analyzer (98% coverage)
+├── coop.py              # Cross-Origin analyzers (100% coverage)
+├── permissions_policy.py # Permissions-Policy (95% coverage)
+├── referrer_policy.py   # Referrer-Policy (100% coverage)
+├── renderer.py          # Terminal output (integration tests needed)
+└── cli.py               # CLI interface (integration tests needed)
 ```
 
 ### Design Principles
 
-1. **Clean Dependencies**: No circular imports, clear module boundaries
-2. **Type Safety**: Comprehensive type hints throughout (mypy validated)
-3. **Protocol-Based**: Uses protocols over inheritance for flexibility
-4. **Issue Taxonomy**: Categorized issue types enable precise severity calculation
-5. **Async First**: Non-blocking HTTP operations with httpx
-6. **Test Driven**: 154 tests covering critical functionality
+**1. Core Logic Correctness Over UI Coverage**
+- Analyzers: 95%+ test coverage
+- Orchestration: 84% coverage
+- CLI/Renderer: Integration tests planned
 
-### Key Technical Decisions
+Why? Core logic bugs silently produce wrong security assessments. UI bugs are obvious.
 
-**Async Architecture**
-
-- Built on `httpx` for modern async HTTP operations
-- Proper timeout handling and connection management
-- Non-blocking analysis for potential batch operations
-
-**Modular Analyzers**
-
-- Each header type has dedicated logic
-- Consistent interface: `analyze(header_value) -> (quality, issues, recommendations, types)`
-- Easy to extend with new analyzers
-
-**Quality Grading System**
-
-- Beyond simple pass/fail
-- Four quality levels: EXCELLENT/GOOD/WEAK/DANGEROUS
-- Severity-weighted scoring
-
-**Issue Type Taxonomy**
-
+**2. Issue Taxonomy Over Binary Results**
 ```python
-# CSP issues
+# CSP issues categorized by nature
 ISSUE_TYPE_STRUCTURAL = "structural"  # Missing directives
 ISSUE_TYPE_UNSAFE = "unsafe"          # unsafe-inline, unsafe-eval
 ISSUE_TYPE_WILDCARD = "wildcard"      # Wildcard sources
-ISSUE_TYPE_DOWNGRADE = "downgrade"    # HTTP sources
-ISSUE_TYPE_DEPRECATED = "deprecated"  # Old directives
-
-# HSTS issues
-ISSUE_TYPE_MISSING_MAXAGE = "missing_maxage"
-ISSUE_TYPE_SHORT_MAXAGE = "short_maxage"
-ISSUE_TYPE_MISSING_SUBDOMAINS = "missing_subdomains"
+ISSUE_TYPE_DOWNGRADE = "downgrade"    # HTTP in HTTPS context
 ```
+
+This enables precise severity calculation and targeted recommendations.
+
+**3. Deterministic & Reproducible**
+- Same input → same output
+- No randomness, no external calls during analysis
+- Testable with standard unit tests
 
 ## Testing
 
-### Test Statistics
+### Coverage Breakdown
 
-```bash
-$ pytest
-
-======================== 154 passed in 4.03s ========================
-
-Coverage Summary:
-Name                             Stmts   Miss  Cover   Missing
---------------------------------------------------------------
-sentinel/analyzer.py               166     26    84%
-sentinel/csp.py                     94      2    98%
-sentinel/coop.py                    90      0   100%
-sentinel/hsts.py                    60      0   100%
-sentinel/permissions_policy.py      60      3    95%
-sentinel/referrer_policy.py         50      0   100%
-sentinel/models.py                  45      0   100%
-sentinel/exceptions.py               8      0   100%
---------------------------------------------------------------
-TOTAL                              705    173    75%
 ```
+Core Analysis (What Matters):
+├── hsts.py               100% (13 tests)
+├── csp.py                 98% (37 tests)
+├── coop.py               100% (27 tests)
+├── referrer_policy.py    100% (22 tests)
+├── permissions_policy.py  95% (20 tests)
+├── models.py             100% (15 tests)
+└── exceptions.py         100%
+
+Integration:
+├── analyzer.py            84% (20 tests) - some error paths untested
+├── cli.py                  0% (integration tests planned)
+└── renderer.py             0% (integration tests planned)
+
+Total: 154 tests passing, ~75% overall coverage
+```
+
+**Philosophy:** We prioritize coverage where bugs have the highest impact (parsing logic, policy evaluation). CLI/UI tests are planned but lower priority than correctness.
 
 ### Running Tests
 
 ```bash
-# Run all tests
+# All tests
 pytest
 
-# Run with coverage report
+# With coverage
 pytest --cov
 
-# Run specific test file
-pytest tests/test_csp.py
+# Core analyzers only
+pytest tests/test_csp.py tests/test_hsts.py tests/test_coop.py
 
-# Run specific test
-pytest tests/test_csp.py::TestCSPAnalysis::test_unsafe_inline_detected
-
-# Verbose output
-pytest -v
-
-# Stop on first failure
-pytest -x
-
-# Run with debugging
-pytest --pdb
+# Specific test
+pytest tests/test_csp.py::TestCSPAnalysis::test_unsafe_inline_detected -v
 ```
 
-### Test Organization
+## Known Limitations & Roadmap
 
-- **Unit Tests**: Individual analyzer components (test_csp.py, test_hsts.py, etc.)
-- **Integration Tests**: Full workflow testing (test_analyzer.py)
-- **Edge Cases**: Malformed input, whitespace, case sensitivity
-- **Real Scenarios**: Common misconfigurations and security issues
+### Current Limitations
+
+**Scope:**
+- Header analysis only (no page content scanning)
+- Single-URL analysis (no site crawling)
+- No historical tracking
+- Terminal output only (JSON export planned)
+
+**Coverage Gaps:**
+- CLI integration tests (0% → planned 80%)
+- Renderer tests (0% → planned 80%)
+- Some edge cases in redirect handling
+
+### Planned Improvements
+
+- [ ] JSON output format
+- [ ] CLI integration tests
+- [ ] Renderer unit tests
+- [ ] Configurable severity weights (advanced users)
+- [ ] Batch analysis mode
+- [ ] CI/CD integration guide
+- [ ] Custom rule definitions
+
+**Not Planned (Scope Creep):**
+- Historical tracking / dashboards → use dedicated tools
+- Site crawling → use dedicated scanners
+- Vulnerability exploitation → not a pentesting tool
+
+### Positioning: What Sentinel Is
+
+✅ **A deterministic header policy evaluator**
+- Explainable assessments
+- Reproducible results
+- Testable analysis logic
+
+✅ **A library that happens to have a CLI**
+- Import `SecurityHeadersAnalyzer` in your code
+- Use programmatically for automation
+- CLI is a convenience, not the primary interface
+
+❌ **Not a complete security scanner**
+- Use ZAP, Burp, or Nuclei for comprehensive testing
+- Sentinel is one tool in a security toolkit
+
+❌ **Not a vulnerability discovery tool**
+- Reports misconfigurations, not exploits
+- Shows attack surface, not proof of compromise
 
 ## Development
 
-### Setup Development Environment
+### Setup
 
 ```bash
-# Clone and setup
 git clone https://github.com/yourusername/sentinel.git
 cd sentinel
 python -m venv .venv
 source .venv/bin/activate
-
-# Install with dev dependencies
 pip install -e ".[dev]"
 ```
 
-### Code Quality Tools
+### Code Quality
 
 ```bash
-# Format code (black)
+# Format
 black sentinel tests
 
-# Lint (ruff)
+# Lint
 ruff check sentinel tests
 
-# Type checking (mypy)
+# Type check
 mypy sentinel
 
-# Run all quality checks
-black . && ruff check . && mypy . && pytest --cov
+# Test
+pytest --cov
+
+# All checks
+make all  # or: black . && ruff check . && mypy . && pytest
 ```
 
-### Contributing
+## Contributing
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/improvement`)
-3. Write tests for new functionality
-4. Ensure all tests pass and coverage is maintained
-5. Format code with black
-6. Submit pull request
+Contributions welcome. Priority areas:
 
-**Requirements:**
+1. **CLI integration tests** - bring coverage to 80%+
+2. **Renderer tests** - validate output formatting
+3. **JSON export** - machine-readable output
+4. **Edge case tests** - unusual header configurations
 
-- All tests must pass
-- Maintain or improve test coverage
-- Follow existing code style
-- Add docstrings for new functions
-- Update documentation as needed
-
-## Known Limitations
-
-### Current Limitations
-
-1. **CLI/Renderer Coverage**: CLI and renderer modules have 0% test coverage (integration tests planned)
-2. **Single URL Analysis**: No batch processing yet (roadmap item)
-3. **No Historical Tracking**: Each analysis is independent
-4. **Terminal Output Only**: No JSON/XML export yet (planned)
-
-### Future Improvements
-
-- [ ] Batch analysis for multiple domains
-- [ ] JSON output format for CI/CD integration
-- [ ] Historical tracking and trend analysis
-- [ ] CLI integration tests
-- [ ] Renderer unit tests
-- [ ] Custom severity weight configuration
-- [ ] Plugin system for custom analyzers
-- [ ] Web dashboard for continuous monitoring
-
-## Real-World Impact
-
-### Common Findings
-
-Based on testing various websites:
-
-**Most Common Issues:**
-
-1. Missing HSTS headers (~60% of sites)
-2. Missing or weak CSP (~70% of sites)
-3. Information disclosure via Server header (~40% of sites)
-4. Missing Referrer-Policy (~50% of sites)
-
-**Best Practices from Analysis:**
-
-- Major CDN providers often have excellent header configurations
-- Enterprise applications frequently miss modern headers (Permissions-Policy, COOP/COEP)
-- Small to medium sites often have no CSP at all
-- Even security-conscious organizations sometimes miss includeSubDomains on HSTS
+Requirements:
+- All tests pass
+- Core analyzer coverage maintained at 95%+
+- Code formatted (black), linted (ruff), type-checked (mypy)
+- New features include tests
 
 ## Security
 
-This is a security analysis tool. See [SECURITY.md](SECURITY.md) for:
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.
 
-- Security considerations when running Sentinel
-- Vulnerability reporting process
-- Security best practices
+**Key Points:**
+- Sentinel makes HTTP requests to user-specified URLs (SSRF considerations)
+- Analysis reports may contain sensitive headers (don't share blindly)
+- Certificate validation is always enabled (no unsafe mode)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-## References
-
-- [OWASP Secure Headers Project](https://owasp.org/www-project-secure-headers/)
-- [MDN HTTP Headers Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
-- [Content Security Policy Reference](https://content-security-policy.com/)
-- [Security Headers Best Practices](https://securityheaders.com/)
-- [HSTS Preload List](https://hstspreload.org/)
+MIT License - see [LICENSE](LICENSE)
 
 ## Acknowledgments
 
 Built with:
-
-- [httpx](https://www.python-httpx.org/) - Modern async HTTP client
-- [rich](https://rich.readthedocs.io/) - Beautiful terminal formatting
+- [httpx](https://www.python-httpx.org/) - Modern async HTTP
+- [rich](https://rich.readthedocs.io/) - Terminal formatting
 - [typer](https://typer.tiangolo.com/) - CLI framework
-- [pytest](https://pytest.org/) - Testing framework
+- [pytest](https://pytest.org/) - Testing
+
+## References
+
+- [OWASP Secure Headers Project](https://owasp.org/www-project-secure-headers/)
+- [MDN HTTP Headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers)
+- [Content Security Policy Reference](https://content-security-policy.com/)
+- [HSTS Preload List](https://hstspreload.org/)
 
 ---
 
-**Built with tactical precision for security professionals who believe headers matter.**
+**Built for engineers who need deterministic, explainable security policy evaluation.**
+
+Not trying to be everything. Just trying to be correct.
