@@ -1,0 +1,7 @@
+# Sentinel Security Header Analyzer - Production Dependencies
+# For hash-verified installation, use: pip-compile --generate-hashes
+
+# Core dependencies - Latest stable versions as of Jan 2026
+httpx>=0.28.1
+rich>=14.2.0
+typer>=0.21.1
